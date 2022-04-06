@@ -23,7 +23,7 @@ class UserType(MetaModel):
 
 class UserProfile(MetaModel):
     user = models.ForeignKey(User,on_delete=models.PROTECT)
-    # birth_date = models.DateTimeField(blank=True,null=True)
+    birth_date = models.DateTimeField(blank=True,null=True)
     credits = models.IntegerField(default=0)
     address = models.CharField(max_length=512,null=True,blank=True)
     phone_number = models.CharField(max_length=15,null=True,blank=True)

@@ -34,6 +34,16 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = '__all__'
         depth = 1
 
+    def save(self, **kwargs):
+        newProfile = UserProfile(birth_date=self.validated_data['birth_date'],
+                    phone_number=self.validated_data['phone_number'],
+                    address=self.validated_data['address'],
+                    user=self.instance)
+        newProfile.save()
+        return newProfile
+
+
+
 
 class LessonSerializer(serializers.ModelSerializer):
     class Meta:

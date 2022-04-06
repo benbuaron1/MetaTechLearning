@@ -1,8 +1,10 @@
 from django.contrib.auth.models import User
 from django.core.serializers import serialize
+from django.db import IntegrityError
 
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
+from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -19,7 +21,21 @@ def users(request):
     elif request.method == 'POST':
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            try:
+                serializer.save()
+                # print(serializer)
+            except IntegrityError as ex:
+                return Response(f"The email {request.data['email']} is already taken, try again",status.HTTP_400_BAD_REQUEST)
+            user = User.objects.get(email=serializer.data['email'])
+            print(user)
+            newProfile = ProfileSerializer(instance=user,data=request.data)
+            newUserToken = Token(user=user)
+            newUserToken.save()
+            print(newProfile)
+            if newProfile.is_valid():
+                newProfile.save()
+            else:
+                return Response(newProfile.errors,status.HTTP_400_BAD_REQUEST)
             return Response(data=serializer.data,status=status.HTTP_201_CREATED)
         return Response(serializer.errors,status.HTTP_400_BAD_REQUEST)
 
@@ -70,7 +86,7 @@ def user_profile(request):
 def Lesson_details(request):
 
     if request.method == 'POST':
-        serializer = LessonSerializer(data=request.data['lesson'])
+        serializer = LessonSerializer(data=request.data)
         # print(serializer.data)
         if serializer.is_valid():
             serializer.save()
