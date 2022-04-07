@@ -51,3 +51,17 @@ class LessonSerializer(serializers.ModelSerializer):
         fields = '__all__'
         depth = 1
 
+
+class TestsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Test
+        fields = '__all__'
+        depth = 1
+
+
+class TestsExecutedSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TestExecuted
+        fields = '__all__'
+        depth = 1
+

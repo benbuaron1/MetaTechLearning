@@ -5,3 +5,7 @@ from .models import *
 admin.site.register(UserProfile)
 admin.site.register(UserType)
 admin.site.register(StudentTeacherLesson)
+admin.site.register(Test)
+admin.site.register(TestExecuted)
+admin.site.register(Question)
+

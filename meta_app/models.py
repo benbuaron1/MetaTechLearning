@@ -1,4 +1,5 @@
 from django.contrib.auth.base_user import AbstractBaseUser
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager, PermissionsMixin, User
 from django.utils import timezone
@@ -27,10 +28,13 @@ class UserProfile(MetaModel):
     credits = models.IntegerField(default=0)
     address = models.CharField(max_length=512,null=True,blank=True)
     phone_number = models.CharField(max_length=15,null=True,blank=True)
-    type = models.ForeignKey(UserType,on_delete=models.RESTRICT,null=True,blank=True)
+    type = models.ForeignKey(UserType,on_delete=models.RESTRICT,null=True,blank=True,default=1)
 
     class Meta:
         db_table = 'UserProfiles'
+
+    def __str__(self):
+        return f"{self.user.first_name} {self.user.last_name}"
 
 
 class StudentTeacherLesson(MetaModel):
@@ -46,6 +50,50 @@ class StudentTeacherLesson(MetaModel):
 
     class Meta:
         db_table = 'Lessons'
+
+class Test(MetaModel):
+    name = models.CharField(max_length=64, null=False, blank=False)
+    subject = models.CharField(max_length=32, null=False, blank=False)
+    questions = models.ManyToManyField('Question', blank=True)
+
+
+    class Meta:
+        db_table = "Test"
+
+    def __str__(self):
+        return self.name
+
+
+class Question(MetaModel):
+    question = models.CharField(max_length=256, null=True, blank=True)
+    option1 = models.CharField(max_length=256, null=True, blank=True)
+    option2 = models.CharField(max_length=256, null=True, blank=True)
+    option3 = models.CharField(max_length=256, null=True, blank=True)
+    option4 = models.CharField(max_length=256, null=True, blank=True)
+
+    class Meta:
+        db_table = "Question"
+
+    def __str__(self):
+        return self.question
+
+
+class TestExecuted(MetaModel):
+    user = models.ForeignKey(UserProfile, on_delete=models.RESTRICT)
+    test_id = models.ForeignKey(Test, on_delete=models.RESTRICT)
+    correct = models.IntegerField(null=False, blank=False)
+    wrong = models.IntegerField(null=False, blank=False)
+    grade = models.IntegerField(
+        validators=[
+            MaxValueValidator(100),
+            MinValueValidator(0)
+        ],
+        null=True,
+        blank=True
+    )
+
+    class Meta:
+        db_table = "TakenTests"
 
 
 
