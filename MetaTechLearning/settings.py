@@ -83,9 +83,9 @@ WSGI_APPLICATION = 'MetaTechLearning.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'MetaTechLearningDB',
+        'NAME': 'MetaTechLearning',
         'USER': 'postgres',
-        'PASSWORD': 'Benbuaron',
+        'PASSWORD': 'Daxterdark1',
         'HOST': '127.0.0.1',
         'PORT': '5432',
     }

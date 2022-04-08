@@ -14,9 +14,8 @@ class MetaModel(models.Model):
         abstract = True
 
 
-
 class UserType(MetaModel):
-    type = models.CharField(max_length=128,null=True,blank=True)
+    type = models.CharField(max_length=128, null=True, blank=True)
 
     def __str__(self):
         return self.type
@@ -24,12 +23,13 @@ class UserType(MetaModel):
     class Meta:
         db_table = 'UserTypes'
 
+
 class UserProfile(models.Model):
-    user = models.ForeignKey(User,on_delete=models.PROTECT)
-    birth_date = models.DateTimeField(blank=True,null=True)
-    address = models.CharField(max_length=512,null=True,blank=True)
-    phone_number = models.CharField(max_length=15,null=True,blank=True)
-    type = models.ForeignKey(UserType,on_delete=models.RESTRICT,null=True,blank=True)
+    user = models.ForeignKey(User, on_delete=models.PROTECT)
+    birth_date = models.DateTimeField(blank=True, null=True)
+    address = models.CharField(max_length=512, null=True, blank=True)
+    phone_number = models.CharField(max_length=15, null=True, blank=True)
+    type = models.ForeignKey(UserType, on_delete=models.RESTRICT, null=True, blank=True)
 
     class Meta:
         db_table = 'UserProfiles'
@@ -37,8 +37,9 @@ class UserProfile(models.Model):
     def __str__(self):
         return f"{self.user.first_name} {self.user.last_name}"
 
+
 class Subject(MetaModel):
-    subject_name = models.CharField(max_length=512,null=False,blank=False)
+    subject_name = models.CharField(max_length=512, null=False, blank=False)
 
     class Meta:
         db_table = 'Subjects'
@@ -48,34 +49,39 @@ class Subject(MetaModel):
 
 
 class Teacher(models.Model):
-    profile = models.ForeignKey(UserProfile,on_delete=models.RESTRICT)
-    subjects = models.ManyToManyField(Subject,null=True,blank=True)
-    credits = models.IntegerField(default=0,null=True,blank=True)
-    students = models.ManyToManyField("Student",null=True,blank=True)
+    profile = models.ForeignKey(UserProfile, on_delete=models.RESTRICT)
+    subjects = models.ManyToManyField(Subject, null=True, blank=True)
+    credits = models.IntegerField(default=0, null=True, blank=True)
+    students = models.ManyToManyField("Student", null=True, blank=True)
 
     class Meta:
         db_table = 'Teachers'
 
+    def __str__(self):
+        return f"{self.profile.user.first_name} {self.profile.user.last_name}"
+
 
 class Student(models.Model):
-    profile = models.ForeignKey(UserProfile,on_delete=models.RESTRICT)
-    subjects = models.ManyToManyField(Subject,null=True,blank=True)
-    credits = models.IntegerField(default=0,null=True,blank=True)
-    teachers = models.ManyToManyField("Teacher",null=True,blank=True)
+    profile = models.ForeignKey(UserProfile, on_delete=models.RESTRICT)
+    subjects = models.ManyToManyField(Subject, null=True, blank=True)
+    credits = models.IntegerField(default=0, null=True, blank=True)
+    teachers = models.ManyToManyField("Teacher", null=True, blank=True)
 
     class Meta:
         db_table = 'Students'
 
-    # def __str__(self):
-    #     return f"{self.user.first_name} {self.user.last_name}"
+    def __str__(self):
+        return f"{self.profile.user.first_name} {self.profile.user.last_name}"
+
 
 class StudentTeacherLesson(MetaModel):
-    student = models.ForeignKey(Student,on_delete=models.RESTRICT)
-    teacher = models.ForeignKey(Teacher,on_delete=models.RESTRICT)
-    subject = models.ForeignKey(Subject,on_delete=models.RESTRICT)
+    student = models.ForeignKey(Student, on_delete=models.RESTRICT)
+    teacher = models.ForeignKey(Teacher, on_delete=models.RESTRICT)
+    subject = models.ForeignKey(Subject, on_delete=models.RESTRICT)
     record_url = models.URLField(blank=True, null=True)
-    lesson_date = models.DateField(null=False,blank=False)
-    lesson_material = models.URLField(null=True,blank=True)
+    lesson_date = models.DateField(null=False, blank=False)
+    lesson_material = models.URLField(null=True, blank=True)
+    length = models.IntegerField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.student} by {self.teacher} at {self.lesson_date}"
@@ -83,11 +89,11 @@ class StudentTeacherLesson(MetaModel):
     class Meta:
         db_table = 'Lessons'
 
+
 class Test(MetaModel):
     name = models.CharField(max_length=64, null=False, blank=False)
     subject = models.CharField(max_length=32, null=False, blank=False)
     questions = models.ManyToManyField('Question', blank=True)
-
 
     class Meta:
         db_table = "Test"
@@ -111,7 +117,7 @@ class Question(MetaModel):
 
 
 class TestExecuted(MetaModel):
-    user = models.ForeignKey(UserProfile, on_delete=models.RESTRICT)
+    student = models.ForeignKey(Student, on_delete=models.RESTRICT)
     test_id = models.ForeignKey(Test, on_delete=models.RESTRICT)
     correct = models.IntegerField(null=False, blank=False)
     wrong = models.IntegerField(null=False, blank=False)
@@ -126,7 +132,3 @@ class TestExecuted(MetaModel):
 
     class Meta:
         db_table = "TakenTests"
-
-
-
-

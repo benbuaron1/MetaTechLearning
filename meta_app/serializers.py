@@ -71,8 +71,8 @@ class TestsExecutedSerializer(serializers.ModelSerializer):
 class TeacherSerializer(serializers.ModelSerializer):
     class Meta:
         model = Teacher
-        fields = '__all__'
-        depth = 1
+        fields = ['id', 'credits', 'profile', 'subjects']
+        depth = 2
 
     def save(self, **kwargs):
         newTeacher = Teacher(profile=self.instance)
@@ -82,8 +82,8 @@ class TeacherSerializer(serializers.ModelSerializer):
 class StudentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Student
-        fields = '__all__'
-        depth = 1
+        fields = ['id', 'credits', 'profile', 'subjects']
+        depth = 2
 
     def save(self,**kwargs):
         newStudent = Student(profile=self.instance,
