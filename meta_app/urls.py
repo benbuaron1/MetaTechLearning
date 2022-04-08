@@ -9,5 +9,6 @@ urlpatterns = [
     path('user/profile',views.user_profile),
     path('token/',obtain_auth_token),
     path('lessons',views.Lesson_details),
+    path('subject',views.add_subject)
 
 ]

@@ -8,4 +8,7 @@ admin.site.register(StudentTeacherLesson)
 admin.site.register(Test)
 admin.site.register(TestExecuted)
 admin.site.register(Question)
+admin.site.register(Teacher)
+admin.site.register(Student)
+admin.site.register(Subject)
 

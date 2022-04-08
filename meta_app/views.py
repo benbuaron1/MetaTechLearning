@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.core.serializers import serialize
 from django.db import IntegrityError, transaction
+from django.db.models.base import ModelBase
 
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
@@ -23,15 +24,41 @@ def register(request):
                 except IntegrityError as ex:
                     return Response(f"The email {request.data['email']} is already taken, try again",status.HTTP_400_BAD_REQUEST)
                 user = User.objects.get(email=serializer.data['email'])
+                type = UserType.objects.get(type=request.data['type'])
                 newProfile = ProfileSerializer(instance=user,data=request.data)
                 newUserToken = Token(user=user)
                 newUserToken.save()
                 if newProfile.is_valid():
-                    newProfile.save()
+                    profile = newProfile.save(type=type)
+                    if request.data['type'] == 'student':
+                        newStudent = StudentSerializer(instance=profile,data=request.data,partial=True)
+                        if newStudent.is_valid():
+                            newStudent.save()
+                        else:
+                            return Response(newStudent.errors)
+                    elif request.data['type'] == 'teacher':
+                        newTeacher = TeacherSerializer(instance=profile,data=request.data,partial=True)
+                        if newTeacher.is_valid():
+                            newTeacher.save()
+                        else:
+                            return Response(newTeacher.errors)
                 else:
                     return Response(newProfile.errors,status.HTTP_400_BAD_REQUEST)
                 return Response(data=serializer.data,status=status.HTTP_201_CREATED)
             return Response(serializer.errors,status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def add_subject(request):
+    if request.method == 'POST':
+        student = Student.objects.get(profile__user=request.user)
+        try:
+            subject = Subject.objects.get(subject_name=request.data['subject'])
+            student.subjects.add(subject)
+            return Response('The subject added successfully',status.HTTP_201_CREATED)
+        except:
+            return Response(f"We dont support the subject {request.data['subject']} at the moment")
 
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
@@ -78,29 +105,34 @@ def user_profile(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def Lesson_details(request):
-    if request.method == 'GET':
-        all_lessons = StudentTeacherLesson.objects.all()
-        serializer = LessonSerializer(all_lessons,many=True)
-        return Response(serializer.data,status.HTTP_200_OK)
+    # if request.method == 'GET':
+    #     all_lessons = StudentTeacherLesson.objects.all()
+    #     serializer = LessonSerializer(all_lessons,many=True)
+    #     return Response(serializer.data,status.HTTP_200_OK)
 
-    elif request.method == 'POST':
-        with transaction.atomic():
-            student = UserProfile.objects.get(id=request.data['student_id'])
-            teacher = UserProfile.objects.get(id=request.data['teacher_id'])
-            lesson = StudentTeacherLesson.objects.create(
-                student_id=student.id,
-                teacher_id=teacher.id,
-                subject=request.data['subject'],
-                lesson_date=request.data['lesson_date'],
-                lesson_material=request.data['lesson_material'],
-                record_url=request.data['record_url']
-            )
-            lesson.save()
-            serializer = LessonSerializer(lesson)
-            return Response(serializer.data,status.HTTP_201_CREATED)
+    if request.method == 'POST':
+        user_profile = UserProfile.objects.get(user=request.user)
+        # print(user_profile)
+        print(user_profile.type.type)
+        if user_profile.type.type == 'teacher':
+            with transaction.atomic():
+                student = Student.objects.get(profile__user=request.data['student_id'])
+                teacher = Teacher.objects.get(profile=user_profile)
+                lesson = StudentTeacherLesson.objects.create(
+                    student_id=student.id,
+                    teacher_id=teacher.id,
+                    subject=Subject.objects.get(subject_name=request.data['subject']),
+                    lesson_date=request.data['lesson_date'],
+                    lesson_material=request.data['lesson_material'],
+                    record_url=request.data['record_url']
+                )
+                lesson.save()
+                serializer = LessonSerializer(lesson)
+                student.teachers.add(teacher)
+                student.subjects.add(lesson.subject)
+                teacher.students.add(student)
+                return Response(serializer.data,status.HTTP_201_CREATED)
+        else:
+            return Response(status=status.HTTP_403_FORBIDDEN)
 
-
-
-
-# in lesson details there is an error while trying to add lesson. need to be fixed with the serializer
 

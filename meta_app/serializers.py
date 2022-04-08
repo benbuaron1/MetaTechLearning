@@ -34,11 +34,13 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = '__all__'
         depth = 1
 
-    def save(self, **kwargs):
-        newProfile = UserProfile(birth_date=self.validated_data['birth_date'],
+    def save(self, type , **kwargs):
+        newProfile = UserProfile(
+            birth_date=self.validated_data['birth_date'],
                     phone_number=self.validated_data['phone_number'],
                     address=self.validated_data['address'],
-                    user=self.instance)
+                    user=self.instance,
+                    type=type)
         newProfile.save()
         return newProfile
 
@@ -65,3 +67,34 @@ class TestsExecutedSerializer(serializers.ModelSerializer):
         fields = '__all__'
         depth = 1
 
+
+class TeacherSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Teacher
+        fields = '__all__'
+        depth = 1
+
+    def save(self, **kwargs):
+        newTeacher = Teacher(profile=self.instance)
+        newTeacher.save()
+        return newTeacher
+
+class StudentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Student
+        fields = '__all__'
+        depth = 1
+
+    def save(self,**kwargs):
+        newStudent = Student(profile=self.instance,
+                            )
+        newStudent.save()
+        return newStudent
+
+
+#     newProfile = UserProfile(birth_date=self.validated_data['birth_date'],
+#                     phone_number=self.validated_data['phone_number'],
+#                     address=self.validated_data['address'],
+#                     user=self.instance)
+#         newProfile.save()
+#         return newProfile
