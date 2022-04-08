@@ -1,0 +1,9 @@
+asgiref==3.5.0
+Django==4.0.3
+django-cors-headers==3.11.0
+djangorestframework==3.13.1
+future==0.18.2
+psycopg2-binary==2.9.3
+pytz==2022.1
+serializers==0.2.4
+sqlparse==0.4.2
