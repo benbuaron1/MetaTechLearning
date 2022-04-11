@@ -11,6 +11,7 @@ urlpatterns = [
     path('lessons', views.lesson_details),
     path('subject',views.add_subject),
     path('test/<str:pk>',views.single_test),
+    path('current_user', views.current_user),
     # path('stats', views.stats),
     # path('stats/<str:pk>', views.stats_per_student),
 ]

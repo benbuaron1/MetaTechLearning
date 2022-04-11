@@ -23,8 +23,7 @@ def register(request):
                 try:
                     serializer.save()
                 except IntegrityError as ex:
-                    return Response(f"The email {request.data['email']} is already taken, try again",
-                                    status.HTTP_400_BAD_REQUEST)
+                    return Response(status=405)
                 user = User.objects.get(email=serializer.data['email'])
                 type = UserType.objects.get(type=request.data['type'])
                 new_profile = ProfileSerializer(instance=user, data=request.data)
