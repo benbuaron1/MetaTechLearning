@@ -103,22 +103,30 @@ def user_profile(request):
         profile.save()
         return Response(status.HTTP_200_OK)
 
-@api_view(['POST', 'GET'])
+@api_view(['GET', 'POST'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def lesson_details(request):
+    print(request.data)
+    print("lesson details called")
     try:
+
         user_profile = UserProfile.objects.get(user=request.user)
     except:
+
         return Response(status=status.HTTP_403_FORBIDDEN)
     if request.method == 'POST':
         if user_profile.type.type == 'teacher':
             with transaction.atomic():
-                student = Student.objects.get(profile__user=request.data['student_id'])
+                student = Student.objects.get(profile__user__username=request.data['student'])
+                user_of_teacher = request.user
+                user_of_student = User.objects.get(username=request.data['student'])
                 teacher = Teacher.objects.get(profile=user_profile)
                 lesson = StudentTeacherLesson.objects.create(
                     student_id=student.id,
+                    student_full_name=f"{user_of_student.first_name} {user_of_student.last_name}",
                     teacher_id=teacher.id,
+                    teacher_full_name=f"{user_of_teacher.first_name} {user_of_teacher.last_name}",
                     subject=Subject.objects.get(subject_name=request.data['subject']),
                     lesson_date=request.data['lesson_date'],
                     lesson_material=request.data['lesson_material'],

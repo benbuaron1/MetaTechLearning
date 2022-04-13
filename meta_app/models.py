@@ -76,7 +76,9 @@ class Student(models.Model):
 
 class StudentTeacherLesson(MetaModel):
     student = models.ForeignKey(Student, on_delete=models.RESTRICT)
+    student_full_name = models.CharField(max_length=64, null=True, blank=True)
     teacher = models.ForeignKey(Teacher, on_delete=models.RESTRICT)
+    teacher_full_name = models.CharField(max_length=64, null=True, blank=True)
     subject = models.ForeignKey(Subject, on_delete=models.RESTRICT)
     record_url = models.URLField(blank=True, null=True)
     lesson_date = models.DateField(null=False, blank=False)
