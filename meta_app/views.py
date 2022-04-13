@@ -153,6 +153,22 @@ def lesson_details(request):
             serializer = LessonSerializer(StudentTeacherLesson.objects.filter(student=student), many=True)
             return Response(serializer.data)
 
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def get_teachers(request):
+    try:
+        user_profile = UserProfile.objects.get(user=request.user)
+    except:
+        return Response(status=status.HTTP_403_FORBIDDEN)
+    if request.method == 'GET':
+        if user_profile.type.type == 'student':
+            student = Student.objects.get(profile=user_profile)
+            serializer = LessonSerializer(StudentTeacherLesson.objects.filter(student=student).distinct('teacher_id'), many=True)
+            nserializer = TeacherSerializer(student.teachers.distinct(),many=True)
+
+            return Response(nserializer.data)
+
 
 
 @api_view(['GET'])
