@@ -99,6 +99,7 @@ def user_profile(request):
         profile = UserProfile.objects.get(user=request.user)
         profile.address = request.data['address']
         profile.phone_number = request.data['phone_number']
+        profile.birth_date = request.data['birth_date']
         user.save()
         profile.save()
         return Response(status.HTTP_200_OK)
@@ -173,9 +174,8 @@ def get_teachers(request):
         if user_profile.type.type == 'student':
             student = Student.objects.get(profile=user_profile)
             serializer = LessonSerializer(StudentTeacherLesson.objects.filter(student=student).distinct('teacher_id'), many=True)
-            nserializer = TeacherSerializer(student.teachers.distinct(),many=True)
-
-            return Response(nserializer.data)
+            serializer = TeacherSerializer(student.teachers.distinct(),many=True)
+            return Response(serializer.data)
 
 
 
