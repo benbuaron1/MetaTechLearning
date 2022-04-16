@@ -190,7 +190,7 @@ def tests(request):
 super_user_methods = ['PUT', 'PATCH', 'DELETE']
 
 @api_view(['GET', 'PUT', 'DELETE', 'PATCH', 'POST'])
-# @authentication_classes([TokenAuthentication])
+@authentication_classes([TokenAuthentication])
 def single_test(request, pk):
     try:
         test = Test.objects.get(id=pk)
@@ -224,7 +224,7 @@ def single_test(request, pk):
                 return Response(status=status.HTTP_204_NO_CONTENT)
 
     elif request.method == 'POST':
-        # print(request.user)
+        print(request.user)
         answers = request.data
         answers = dict(answers)
         count = 0
@@ -237,6 +237,7 @@ def single_test(request, pk):
                         count += 1
         try:
             student = Student.objects.get(profile__user=request.user)
+            print(student)
             executed = TestExecuted.objects.create(
                 student=student,
                 test_id=Test.objects.get(id=test.id),
@@ -252,6 +253,7 @@ def single_test(request, pk):
             Your grade is {((count / total) * 100).__round__()}.
             """,status=status.HTTP_201_CREATED)
         except Exception as e:
+            print(e)
             return Response(f"""
             You had {count} correct answers out of {total} total questions 
             in {test.name} test.
