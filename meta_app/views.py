@@ -2,7 +2,6 @@ from django.contrib.auth.models import User
 from django.core.serializers import serialize
 from django.db import IntegrityError, transaction
 from django.db.models.base import ModelBase
-
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.models import Token
@@ -191,7 +190,7 @@ def tests(request):
 super_user_methods = ['PUT', 'PATCH', 'DELETE']
 
 @api_view(['GET', 'PUT', 'DELETE', 'PATCH', 'POST'])
-@authentication_classes([TokenAuthentication])
+# @authentication_classes([TokenAuthentication])
 def single_test(request, pk):
     try:
         test = Test.objects.get(id=pk)
@@ -225,15 +224,14 @@ def single_test(request, pk):
                 return Response(status=status.HTTP_204_NO_CONTENT)
 
     elif request.method == 'POST':
+        # print(request.user)
         answers = request.data
         answers = dict(answers)
-        print(answers)
         count = 0
         total = 0
         for q in test.questions.all():
             total += 1
             for i, j in answers.items():
-                print(i,j)
                 if int(q.id) == int(i):
                     if q.option1 == j[0]:
                         count += 1
@@ -244,18 +242,22 @@ def single_test(request, pk):
                 test_id=Test.objects.get(id=test.id),
                 correct=count,
                 wrong=total - count,
-                grade=(count / total) * 100
+                grade=((count / total) * 100).__round__()
             )
             executed.save()
-            return Response(status=status.HTTP_201_CREATED)
+            return Response(f"""
+            {student.profile.user.first_name.title()}, We hope you have learned from the test! \n
+            You had {count} correct answers out of {total} total questions 
+            in {test.name} test.
+            Your grade is {((count / total) * 100).__round__()}.
+            """,status=status.HTTP_201_CREATED)
         except Exception as e:
-            print(e)
-        return Response(f"""
-        You had {count} correct answers out of {total} total questions 
-        in {test.name} test.
-        Your grade is {(count / total) * 100}.
-        Sign up to save results!
-        """)
+            return Response(f"""
+            You had {count} correct answers out of {total} total questions 
+            in {test.name} test.
+            Your grade is {(count / total) * 100}.
+            Sign up to save results!
+            """)
 
 
 
