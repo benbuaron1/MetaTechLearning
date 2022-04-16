@@ -12,7 +12,8 @@ urlpatterns = [
     path('subject',views.add_subject),
     path('test/<str:pk>',views.single_test),
     path('current_user', views.current_user),
-    path('get_teachers', views.get_teachers)
+    path('get_teachers', views.get_teachers),
+    path('test',views.tests)
     # path('stats', views.stats),
     # path('stats/<str:pk>', views.stats_per_student),
 ]

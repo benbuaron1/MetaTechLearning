@@ -227,11 +227,13 @@ def single_test(request, pk):
     elif request.method == 'POST':
         answers = request.data
         answers = dict(answers)
+        print(answers)
         count = 0
         total = 0
         for q in test.questions.all():
             total += 1
             for i, j in answers.items():
+                print(i,j)
                 if int(q.id) == int(i):
                     if q.option1 == j[0]:
                         count += 1
@@ -248,12 +250,12 @@ def single_test(request, pk):
             return Response(status=status.HTTP_201_CREATED)
         except Exception as e:
             print(e)
-            return Response(f"""
-            You had {count} correct answers out of {total} total questions 
-            in {test.name} test.
-            Your grade is {(count / total) * 100}.
-            Sign up to save results!
-            """)
+        return Response(f"""
+        You had {count} correct answers out of {total} total questions 
+        in {test.name} test.
+        Your grade is {(count / total) * 100}.
+        Sign up to save results!
+        """)
 
 
 
