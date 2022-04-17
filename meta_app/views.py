@@ -2,7 +2,6 @@ from django.contrib.auth.models import User
 from django.core.serializers import serialize
 from django.db import IntegrityError, transaction
 from django.db.models.base import ModelBase
-
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.models import Token
@@ -225,6 +224,7 @@ def single_test(request, pk):
                 return Response(status=status.HTTP_204_NO_CONTENT)
 
     elif request.method == 'POST':
+        print(request.user)
         answers = request.data
         answers = dict(answers)
         count = 0
@@ -237,15 +237,21 @@ def single_test(request, pk):
                         count += 1
         try:
             student = Student.objects.get(profile__user=request.user)
+            print(student)
             executed = TestExecuted.objects.create(
                 student=student,
                 test_id=Test.objects.get(id=test.id),
                 correct=count,
                 wrong=total - count,
-                grade=(count / total) * 100
+                grade=((count / total) * 100).__round__()
             )
             executed.save()
-            return Response(status=status.HTTP_201_CREATED)
+            return Response(f"""
+            {student.profile.user.first_name.title()}, We hope you have learned from the test! \n
+            You had {count} correct answers out of {total} total questions 
+            in {test.name} test.
+            Your grade is {((count / total) * 100).__round__()}.
+            """,status=status.HTTP_201_CREATED)
         except Exception as e:
             print(e)
             return Response(f"""
