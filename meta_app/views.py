@@ -103,17 +103,15 @@ def user_profile(request):
         profile.save()
         return Response(status.HTTP_200_OK)
 
-@api_view(['GET', 'POST'])
+@api_view(['GET', 'POST', 'PATCH'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def lesson_details(request):
     print(request.data)
     print("lesson details called")
     try:
-
         user_profile = UserProfile.objects.get(user=request.user)
     except:
-
         return Response(status=status.HTTP_403_FORBIDDEN)
     if request.method == 'POST':
         if user_profile.type.type == 'teacher':
@@ -137,11 +135,9 @@ def lesson_details(request):
                 credits_to_add = int(request.data['length']) // 6
                 student.credits = current_student_credits + credits_to_add
                 student.save()
-
                 current_teacher_credits = int(teacher.credits)
                 teacher.credits = current_teacher_credits + credits_to_add
                 teacher.save()
-
                 lesson.save()
                 serializer = LessonSerializer(lesson)
                 student.teachers.add(teacher)
@@ -150,6 +146,22 @@ def lesson_details(request):
                 return Response(serializer.data, status.HTTP_201_CREATED)
         else:
             return Response(status=status.HTTP_403_FORBIDDEN)
+
+    elif request.method == 'PATCH':
+        if user_profile.type.type == 'teacher':
+            with transaction.atomic():
+                lesson = StudentTeacherLesson.objects.get(id=request.data['id'])
+                lesson.lesson_date = request.data['lesson_date']
+                if request.data['student'] != "":
+                    lesson.student = Student.objects.get(profile__user__email=request.data['student'])
+                    user_of_student = User.objects.get(username=request.data['student'])
+                    lesson.student_full_name = f"{user_of_student.first_name} {user_of_student.last_name}"
+                lesson.subject = Subject.objects.get(subject_name=request.data['subject'])
+                lesson.record_url = request.data['recording_url']
+
+                lesson.save()
+                return Response(status.HTTP_200_OK)
+
 
     elif request.method == 'GET':
         if user_profile.type.type == 'teacher':
