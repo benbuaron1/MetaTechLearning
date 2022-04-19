@@ -185,6 +185,19 @@ def tests(request):
         serializer = TestsSerializer(all_tests, many=True)
         return Response(data=serializer.data)
 
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def tests_by_student(request):
+    try:
+        student = Student.objects.get(profile__user__username=request.user)
+        relevant_tests = TestExecuted.objects.filter(student=student)
+        serializer = TestsExecutedSerializer(relevant_tests,many=True)
+        return Response(data=serializer.data,status=status.HTTP_200_OK)
+    except:
+        return Response(status.HTTP_404_NOT_FOUND)
+
+
 
 
 super_user_methods = ['PUT', 'PATCH', 'DELETE']
