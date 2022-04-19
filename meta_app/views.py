@@ -8,6 +8,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from django.db.models import Q
 from .custom_queries import *
 
 from .models import UserProfile, UserType, StudentTeacherLesson
@@ -102,6 +103,20 @@ def user_profile(request):
         user.save()
         profile.save()
         return Response(status.HTTP_200_OK)
+
+@api_view(['GET', 'POST'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def get_all_users(request):
+    users_list = UserProfile.objects.all()
+    serializer = ProfileSerializer(users_list,many=True)
+    if 'search_user' in request.GET and request.GET['search_user']:
+
+        users_list = UserProfile.objects.filter(Q(user__first_name__icontains=request.GET['search_user'])|Q(user__last_name__icontains=request.GET['search_user'])|
+                                                Q(user__userprofile__phone_number__contains=request.GET['search_user'])| Q(user__email__icontains=request.GET['search_user']))
+        serializer = ProfileSerializer(users_list, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(serializer.data,status.HTTP_200_OK)
 
 @api_view(['GET', 'POST'])
 @authentication_classes([TokenAuthentication])

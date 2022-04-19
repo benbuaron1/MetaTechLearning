@@ -14,7 +14,8 @@ urlpatterns = [
     path('current_user', views.current_user),
     path('get_teachers', views.get_teachers),
     path('test',views.tests),
-    path('test_by_student',views.tests_by_student)
+    path('test_by_student',views.tests_by_student),
+    path('all_users',views.get_all_users)
 
     # path('stats', views.stats),
     # path('stats/<str:pk>', views.stats_per_student),
