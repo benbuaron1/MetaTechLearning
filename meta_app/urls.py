@@ -15,7 +15,10 @@ urlpatterns = [
     path('get_teachers', views.get_teachers),
     path('test',views.tests),
     path('test_by_student',views.tests_by_student),
-    path('all_users',views.get_all_users)
+    path('all_users',views.get_all_users),
+    path('user/getusertype', views.get_user_type),
+    path('admin/get_un_approved', views.admin_get_unapproved_lessons),
+    path('admin/approve', views.admin_approve_lesson)
 
     # path('stats', views.stats),
     # path('stats/<str:pk>', views.stats_per_student),

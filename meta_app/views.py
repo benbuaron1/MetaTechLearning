@@ -14,6 +14,7 @@ from .custom_queries import *
 from .models import UserProfile, UserType, StudentTeacherLesson
 from .serializers import *
 
+
 @api_view(['POST'])
 def register(request):
     if request.method == 'POST':
@@ -69,10 +70,31 @@ def add_subject(request):
 def current_user(request):
     curr_user = request.user
     data = {
+        'username': curr_user.username,
+        "is_superuser": curr_user.is_superuser,
         "first_name": curr_user.first_name,
         "last_name": curr_user.last_name
     }
     return Response(data)
+
+
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def get_user_type(request):
+    user = User.objects.get(username=request.user)
+    if user.is_superuser:
+        return Response('superuser')
+    try:
+        user_profile = UserProfile.objects.get(user=request.user)
+    except:
+        return Response(status=status.HTTP_403_FORBIDDEN)
+    if request.method == 'GET':
+        if user_profile.type.type == 'student':
+            return Response('student')
+        elif user_profile.type.type == 'teacher':
+            return Response('teacher')
+        return Response(status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET', 'PATCH'])
@@ -104,31 +126,31 @@ def user_profile(request):
         profile.save()
         return Response(status.HTTP_200_OK)
 
+
 @api_view(['GET', 'POST'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def get_all_users(request):
     users_list = UserProfile.objects.all()
-    serializer = ProfileSerializer(users_list,many=True)
+    serializer = ProfileSerializer(users_list, many=True)
     if 'search_user' in request.GET and request.GET['search_user']:
-
-        users_list = UserProfile.objects.filter(Q(user__first_name__icontains=request.GET['search_user'])|Q(user__last_name__icontains=request.GET['search_user'])|
-                                                Q(user__userprofile__phone_number__contains=request.GET['search_user'])| Q(user__email__icontains=request.GET['search_user']))
+        users_list = UserProfile.objects.filter(Q(user__first_name__icontains=request.GET['search_user']) | Q(
+            user__last_name__icontains=request.GET['search_user']) |
+                                                Q(user__userprofile__phone_number__contains=request.GET[
+                                                    'search_user']) | Q(
+            user__email__icontains=request.GET['search_user']))
         serializer = ProfileSerializer(users_list, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    return Response(serializer.data,status.HTTP_200_OK)
+    return Response(serializer.data, status.HTTP_200_OK)
 
-@api_view(['GET', 'POST'])
+
+@api_view(['GET', 'POST', 'PATCH'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def lesson_details(request):
-    print(request.data)
-    print("lesson details called")
     try:
-
         user_profile = UserProfile.objects.get(user=request.user)
     except:
-
         return Response(status=status.HTTP_403_FORBIDDEN)
     if request.method == 'POST':
         if user_profile.type.type == 'teacher':
@@ -148,15 +170,8 @@ def lesson_details(request):
                     record_url=request.data['record_url'],
                     length=request.data['length']
                 )
-                current_student_credits = int(student.credits)
-                credits_to_add = int(request.data['length']) // 6
-                student.credits = current_student_credits + credits_to_add
                 student.save()
-
-                current_teacher_credits = int(teacher.credits)
-                teacher.credits = current_teacher_credits + credits_to_add
                 teacher.save()
-
                 lesson.save()
                 serializer = LessonSerializer(lesson)
                 student.teachers.add(teacher)
@@ -165,6 +180,27 @@ def lesson_details(request):
                 return Response(serializer.data, status.HTTP_201_CREATED)
         else:
             return Response(status=status.HTTP_403_FORBIDDEN)
+
+    elif request.method == 'PATCH':
+        if user_profile.type.type == 'teacher':
+            with transaction.atomic():
+                lesson = StudentTeacherLesson.objects.get(id=request.data['id'])
+                if not lesson.approved:
+                    lesson.lesson_date = request.data['lesson_date']
+                    if request.data['student'] != "":
+                        lesson.student = Student.objects.get(profile__user__email=request.data['student'])
+                        user_of_student = User.objects.get(username=request.data['student'])
+                        lesson.student_full_name = f"{user_of_student.first_name} {user_of_student.last_name}"
+                    lesson.subject = Subject.objects.get(subject_name=request.data['subject'])
+                    lesson.record_url = request.data['recording_url']
+                    lesson.lesson_material = request.data['lesson_material_url']
+                    lesson.length = request.data['length']
+                    lesson.save()
+                    return Response(status.HTTP_200_OK)
+                else:
+                    return Response(status.HTTP_403_FORBIDDEN)
+
+
 
     elif request.method == 'GET':
         if user_profile.type.type == 'teacher':
@@ -175,6 +211,69 @@ def lesson_details(request):
             student = Student.objects.get(profile=user_profile)
             serializer = LessonSerializer(StudentTeacherLesson.objects.filter(student=student), many=True)
             return Response(serializer.data)
+
+
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def admin_get_all_lessons(request):
+    serializer = LessonSerializer(StudentTeacherLesson.objects.all(), many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def admin_get_lesson(request):
+    serializer = LessonSerializer(StudentTeacherLesson.objects.get(id=request.data['id']))
+    return Response(serializer.data)
+
+
+@api_view(['PATCH'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def admin_approve_lesson(request):
+    with transaction.atomic():
+        lesson = StudentTeacherLesson.objects.get(id=request.data['id'])
+        lesson.approved = request.data['approved']
+        student = lesson.student
+        # student = Student.objects.get(profile__user__username=request.data['student'])
+        teacher = lesson.teacher
+        # teacher = Teacher.objects.get(profile=user_profile)
+        current_student_credits = int(student.credits)
+        credits_to_add = int(lesson.length) // 6
+        student.credits = current_student_credits + credits_to_add
+        student.save()
+        current_teacher_credits = int(teacher.credits)
+        teacher.credits = current_teacher_credits + credits_to_add
+        teacher.save()
+        lesson.save()
+        serializer = LessonSerializer(lesson)
+        student.teachers.add(teacher)
+        student.subjects.add(lesson.subject)
+        teacher.students.add(student)
+        return Response(serializer.data, status.HTTP_200_OK)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def admin_get_unapproved_lessons(request):
+    serializer = LessonSerializer(StudentTeacherLesson.objects.filter(approved=False), many=True)
+    return Response(serializer.data)
+
 
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
@@ -187,10 +286,10 @@ def get_teachers(request):
     if request.method == 'GET':
         if user_profile.type.type == 'student':
             student = Student.objects.get(profile=user_profile)
-            serializer = LessonSerializer(StudentTeacherLesson.objects.filter(student=student).distinct('teacher_id'), many=True)
-            serializer = TeacherSerializer(student.teachers.distinct(),many=True)
+            serializer = LessonSerializer(StudentTeacherLesson.objects.filter(student=student).distinct('teacher_id'),
+                                          many=True)
+            serializer = TeacherSerializer(student.teachers.distinct(), many=True)
             return Response(serializer.data)
-
 
 
 @api_view(['GET'])
@@ -200,6 +299,7 @@ def tests(request):
         serializer = TestsSerializer(all_tests, many=True)
         return Response(data=serializer.data)
 
+
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
@@ -207,15 +307,14 @@ def tests_by_student(request):
     try:
         student = Student.objects.get(profile__user__username=request.user)
         relevant_tests = TestExecuted.objects.filter(student=student)
-        serializer = TestsExecutedSerializer(relevant_tests,many=True)
-        return Response(data=serializer.data,status=status.HTTP_200_OK)
+        serializer = TestsExecutedSerializer(relevant_tests, many=True)
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
     except:
         return Response(status.HTTP_404_NOT_FOUND)
 
 
-
-
 super_user_methods = ['PUT', 'PATCH', 'DELETE']
+
 
 @api_view(['GET', 'PUT', 'DELETE', 'PATCH', 'POST'])
 @authentication_classes([TokenAuthentication])
@@ -279,7 +378,7 @@ def single_test(request, pk):
             You had {count} correct answers out of {total} total questions 
             in {test.name} test.
             Your grade is {((count / total) * 100).__round__()}.
-            """,status=status.HTTP_201_CREATED)
+            """, status=status.HTTP_201_CREATED)
         except Exception as e:
             print(e)
             return Response(f"""
@@ -288,8 +387,6 @@ def single_test(request, pk):
             Your grade is {(count / total) * 100}.
             Sign up to save results!
             """)
-
-
 
 # TODO: update all the fields in the custom queries according to the changes
 

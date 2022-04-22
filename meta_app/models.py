@@ -84,12 +84,17 @@ class StudentTeacherLesson(MetaModel):
     lesson_date = models.DateField(null=False, blank=False)
     lesson_material = models.URLField(null=True, blank=True)
     length = models.IntegerField(blank=True, null=True)
+    approved = models.BooleanField(blank=True, null=True, default=False)
 
     def __str__(self):
         return f"{self.student} by {self.teacher} at {self.lesson_date}"
 
     class Meta:
         db_table = 'Lessons'
+
+
+
+
 
 
 class Test(MetaModel):
