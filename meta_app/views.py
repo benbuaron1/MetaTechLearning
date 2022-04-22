@@ -2,7 +2,6 @@ from django.contrib.auth.models import User
 from django.core.serializers import serialize
 from django.db import IntegrityError, transaction
 from django.db.models.base import ModelBase
-
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.models import Token
@@ -104,17 +103,15 @@ def user_profile(request):
         profile.save()
         return Response(status.HTTP_200_OK)
 
-@api_view(['GET', 'POST'])
+@api_view(['GET', 'POST', 'PATCH'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def lesson_details(request):
     print(request.data)
     print("lesson details called")
     try:
-
         user_profile = UserProfile.objects.get(user=request.user)
     except:
-
         return Response(status=status.HTTP_403_FORBIDDEN)
     if request.method == 'POST':
         if user_profile.type.type == 'teacher':
@@ -138,11 +135,9 @@ def lesson_details(request):
                 credits_to_add = int(request.data['length']) // 6
                 student.credits = current_student_credits + credits_to_add
                 student.save()
-
                 current_teacher_credits = int(teacher.credits)
                 teacher.credits = current_teacher_credits + credits_to_add
                 teacher.save()
-
                 lesson.save()
                 serializer = LessonSerializer(lesson)
                 student.teachers.add(teacher)
@@ -151,6 +146,22 @@ def lesson_details(request):
                 return Response(serializer.data, status.HTTP_201_CREATED)
         else:
             return Response(status=status.HTTP_403_FORBIDDEN)
+
+    elif request.method == 'PATCH':
+        if user_profile.type.type == 'teacher':
+            with transaction.atomic():
+                lesson = StudentTeacherLesson.objects.get(id=request.data['id'])
+                lesson.lesson_date = request.data['lesson_date']
+                if request.data['student'] != "":
+                    lesson.student = Student.objects.get(profile__user__email=request.data['student'])
+                    user_of_student = User.objects.get(username=request.data['student'])
+                    lesson.student_full_name = f"{user_of_student.first_name} {user_of_student.last_name}"
+                lesson.subject = Subject.objects.get(subject_name=request.data['subject'])
+                lesson.record_url = request.data['recording_url']
+
+                lesson.save()
+                return Response(status.HTTP_200_OK)
+
 
     elif request.method == 'GET':
         if user_profile.type.type == 'teacher':
@@ -225,6 +236,7 @@ def single_test(request, pk):
                 return Response(status=status.HTTP_204_NO_CONTENT)
 
     elif request.method == 'POST':
+        print(request.user)
         answers = request.data
         answers = dict(answers)
         count = 0
@@ -237,15 +249,21 @@ def single_test(request, pk):
                         count += 1
         try:
             student = Student.objects.get(profile__user=request.user)
+            print(student)
             executed = TestExecuted.objects.create(
                 student=student,
                 test_id=Test.objects.get(id=test.id),
                 correct=count,
                 wrong=total - count,
-                grade=(count / total) * 100
+                grade=((count / total) * 100).__round__()
             )
             executed.save()
-            return Response(status=status.HTTP_201_CREATED)
+            return Response(f"""
+            {student.profile.user.first_name.title()}, We hope you have learned from the test! \n
+            You had {count} correct answers out of {total} total questions 
+            in {test.name} test.
+            Your grade is {((count / total) * 100).__round__()}.
+            """,status=status.HTTP_201_CREATED)
         except Exception as e:
             print(e)
             return Response(f"""

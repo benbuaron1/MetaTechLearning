@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="MetaTechLearning@localhost" uuid="37fde166-527a-450c-9031-d6ba29dcf106">
+    <data-source source="LOCAL" name="MetaTechLearningDB@localhost" uuid="233b5b24-1362-4c73-b161-a87edcd7decd">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://localhost:5432/MetaTechLearning</jdbc-url>
+      <jdbc-url>jdbc:postgresql://localhost:5432/MetaTechLearningDB</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
   </component>
