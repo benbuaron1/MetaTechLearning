@@ -108,6 +108,7 @@ def user_profile(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def get_all_users(request):
+    
     users_list = UserProfile.objects.all()
     serializer = ProfileSerializer(users_list,many=True)
     if 'search_user' in request.GET and request.GET['search_user']:
