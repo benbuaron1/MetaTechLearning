@@ -14,7 +14,6 @@ from .custom_queries import *
 from .models import UserProfile, UserType, StudentTeacherLesson
 from .serializers import *
 
-
 @api_view(['POST'])
 def register(request):
     if request.method == 'POST':
