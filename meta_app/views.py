@@ -254,19 +254,6 @@ def admin_approve_lesson(request):
         return Response(serializer.data, status.HTTP_200_OK)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
