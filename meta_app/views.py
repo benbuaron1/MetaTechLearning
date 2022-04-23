@@ -1,3 +1,5 @@
+import io
+
 from django.contrib.auth.models import User
 from django.core.serializers import serialize
 from django.db import IntegrityError, transaction
@@ -6,6 +8,7 @@ from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework.parsers import JSONParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db.models import Q
@@ -49,18 +52,49 @@ def register(request):
             return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['POST'])
+@api_view(['POST','GET','DELETE'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
-def add_subject(request):
-    if request.method == 'POST':
-        student = Student.objects.get(profile__user=request.user)
-        try:
-            subject = Subject.objects.get(subject_name=request.data['subject'])
-            student.subjects.add(subject)
+def user_subjects(request, name=None):
+    try:
+        user_profile = UserProfile.objects.get(user=request.user)
+    except:
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
+    if user_profile.type.type == 'student':
+        student = Student.objects.get(profile=user_profile)
+        if request.method == 'GET':
+            subjects = []
+            for subject in student.subjects.all():
+                subjects.append(Subject.objects.get(id=subject.id))
+            serializer = SubjectSerializer(subjects, many=True)
+            return Response(serializer.data)
+        if request.method == 'POST':
+            student.subjects.add(Subject.objects.get(subject_name=request.data['subject']))
             return Response('The subject added successfully', status.HTTP_201_CREATED)
-        except:
-            return Response(f"We dont support the subject {request.data['subject']} at the moment")
+        if request.method == 'DELETE':
+            print(name)
+            student.subjects.remove(Subject.objects.get(subject_name=name))
+            return Response(status.HTTP_200_OK)
+
+
+    elif user_profile.type.type == "teacher":
+        teacher = Teacher.objects.get(profile=user_profile)
+        if request.method == 'GET':
+            subjects = []
+            for subject in teacher.subjects.all():
+                subjects.append(Subject.objects.get(id=subject.id))
+            serializer = SubjectSerializer(subjects, many=True)
+            return Response(serializer.data)
+        elif request.method == 'POST':
+            teacher.subjects.add(Subject.objects.get(subject_name=request.data['subject']))
+            return Response('The subject added successfully', status.HTTP_201_CREATED)
+        elif request.method == 'DELETE':
+            print(name)
+            teacher.subjects.remove(Subject.objects.get(subject_name=name))
+            return Response(status.HTTP_200_OK)
+
+
 
 
 @api_view(['GET'])
@@ -277,6 +311,33 @@ def get_teachers(request):
                                           many=True)
             serializer = TeacherSerializer(student.teachers.distinct(), many=True)
             return Response(serializer.data)
+
+
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def get_students(request):
+    try:
+        user_profile = UserProfile.objects.get(user=request.user)
+    except:
+        return Response(status=status.HTTP_403_FORBIDDEN)
+    if request.method == 'GET':
+        if user_profile.type.type == 'teacher':
+            teacher = Teacher.objects.get(profile=user_profile)
+            serializer = LessonSerializer(StudentTeacherLesson.objects.filter(teacher=teacher).distinct('student_id'),
+                                          many=True)
+            serializer = TeacherSerializer(teacher.students.distinct(), many=True)
+            return Response(serializer.data)
+
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def get_subjects(request):
+    if request.method == 'GET':
+        serializer = SubjectSerializer(Subject.objects.all(), many=True)
+        return Response(serializer.data)
+
+
 
 
 @api_view(['GET'])
