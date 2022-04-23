@@ -188,7 +188,7 @@ def get_teachers(request):
     if request.method == 'GET':
         if user_profile.type.type == 'student':
             student = Student.objects.get(profile=user_profile)
-            serializer = LessonSerializer(StudentTeacherLesson.objects.filter(student=student).distinct('teacher_id'), many=True)
+            # serializer = LessonSerializer(StudentTeacherLesson.objects.filter(student=student).distinct('teacher_id'), many=True)
             serializer = TeacherSerializer(student.teachers.distinct(),many=True)
             return Response(serializer.data)
 
@@ -282,12 +282,11 @@ def single_test(request, pk):
             Your grade is {((count / total) * 100).__round__()}.
             """,status=status.HTTP_201_CREATED)
         except Exception as e:
-            print(e)
+            # print(e)
             return Response(f"""
             You had {count} correct answers out of {total} total questions 
             in {test.name} test.
             Your grade is {(count / total) * 100}.
-            Sign up to save results!
             """)
 
 
