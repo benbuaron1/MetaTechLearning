@@ -86,10 +86,21 @@ class StudentSerializer(serializers.ModelSerializer):
         depth = 2
 
     def save(self,**kwargs):
-        newStudent = Student(profile=self.instance,
-                            )
+        newStudent = Student(profile=self.instance,)
         newStudent.save()
         return newStudent
+
+
+class SubjectSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Subject
+        fields = ['subject_name']
+
+
+    def save(self, **kwargs):
+        newSubject = Subject(subject_name=self.instance,)
+        newSubject.save()
+        return newSubject
 
 
 #     newProfile = UserProfile(birth_date=self.validated_data['birth_date'],
