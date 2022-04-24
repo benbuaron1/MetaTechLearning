@@ -164,18 +164,35 @@ def user_profile(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def get_all_users(request):
-
-    users_list = UserProfile.objects.all()
-    serializer = ProfileSerializer(users_list, many=True)
+    teachers = Teacher.objects.all()
+    serializer = TeacherSerializer(teachers,many=True)
     if 'search_user' in request.GET and request.GET['search_user']:
-        users_list = UserProfile.objects.filter(Q(user__first_name__icontains=request.GET['search_user']) | Q(
-            user__last_name__icontains=request.GET['search_user']) |
-                                                Q(user__userprofile__phone_number__contains=request.GET[
-                                                    'search_user']) | Q(
-            user__email__icontains=request.GET['search_user']))
-        serializer = ProfileSerializer(users_list, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    return Response(serializer.data, status.HTTP_200_OK)
+        teachers_list = Teacher.objects.filter(Q(profile__user__first_name__icontains=request.GET['search_user']) |Q(profile__user__last_name__icontains=request.GET['search_user'])|
+                                               Q(profile__phone_number__contains=request.GET['search_user'])|Q(subjects__subject_name__icontains=request.GET['search_user'])
+                                               |Q(profile__user__email__icontains=request.GET['search_user']))
+        serializer = TeacherSerializer(teachers_list,many=True)
+        return Response(serializer.data)
+    return Response(serializer.data,status=status.HTTP_200_OK)
+
+
+
+#     users_list = UserProfile.objects.filter(Q(user__first_name__icontains=request.GET['search_user']) | Q(
+#         user__last_name__icontains=request.GET['search_user']) |
+#                                             Q(user__userprofile__phone_number__contains=request.GET[
+#                                                 'search_user']) | Q(
+#         user__email__icontains=request.GET['search_user']))
+
+    # users_list = UserProfile.objects.all()
+    # serializer = ProfileSerializer(users_list, many=True)
+    # if 'search_user' in request.GET and request.GET['search_user']:
+    #     users_list = UserProfile.objects.filter(Q(user__first_name__icontains=request.GET['search_user']) | Q(
+    #         user__last_name__icontains=request.GET['search_user']) |
+    #                                             Q(user__userprofile__phone_number__contains=request.GET[
+    #                                                 'search_user']) | Q(
+    #         user__email__icontains=request.GET['search_user']))
+    #     serializer = ProfileSerializer(users_list, many=True)
+    #     return Response(serializer.data, status=status.HTTP_200_OK)
+    # return Response(serializer.data, status.HTTP_200_OK)
 
 
 @api_view(['GET', 'POST', 'PATCH'])
